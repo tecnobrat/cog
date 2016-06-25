@@ -17,8 +17,13 @@ defmodule Cog.Repository.Bundles do
   @reserved_bundle_names [
     Cog.embedded_bundle,
     Cog.site_namespace,
-    "user" # a bundle named "user" would break alias resolution
+    "user", # a bundle named "user" would break alias resolution
+    "cog"   # we're going to squat on this for now to prevent potential confusion
   ]
+
+  # We're also going to block the installation of any bundles that are
+  # prefixed with "cog" or the embedded bundle name
+  @reserved_bundle_name_regex Regex.compile!("^(cog|#{Cog.embedded_bundle})-.*$")
 
   @permanent_site_bundle_version "0.0.0"
 
@@ -37,8 +42,13 @@ defmodule Cog.Repository.Bundles do
   """
   def install(%{"name" => reserved}) when reserved in @reserved_bundle_names,
     do: {:error, {:reserved_bundle, reserved}}
-  def install(params),
-    do: __install(params)
+  def install(%{"name" => name}=params) do
+    if Regex.match?(@reserved_bundle_name_regex, name) do
+      {:error, {:reserved_bundle, name}}
+    else
+      __install(params)
+    end
+  end
 
   # TODO: clean this up so we only need the config file part;
   # everything else is redundant

@@ -364,6 +364,27 @@ defmodule Cog.Repository.BundlesTest do
                                                                                                   "version" => "1.0.0-pre1"}})
   end
 
+  for bad_name <- ["operable", "cog", "site", "user", "cog-",
+                   "cog-stuff", "operable-", "operable-stuff"] do
+    test "cannot install a bundle named #{bad_name}" do
+      result = Bundles.install(%{"name" => unquote(bad_name),
+                                 "version" => "1.0.0",
+                                 "config_file" => %{"name" => unquote(bad_name),
+                                                    "version" => "1.0.0"}})
+      assert {:error, {:reserved_bundle, unquote(bad_name)}} = result
+    end
+  end
+
+  for ok_name <- ["operable_stuff", "operable.stuff", "cogitation", "site-stuff", "user-stuff",
+                  "cog_stuff", "cog.stuff", "operable_stuff", "operable.stuff"] do
+    test "can install a bundle named #{ok_name}" do
+      result = Bundles.install(%{"name" => unquote(ok_name),
+                                 "version" => "1.0.0",
+                                 "config_file" => %{"name" => unquote(ok_name),
+                                                    "version" => "1.0.0"}})
+      assert {:ok, %BundleVersion{bundle: %Bundle{name: unquote(ok_name)}}} = result
+    end
+  end
 
   ########################################################################
 
